@@ -1,0 +1,529 @@
+(*
+  File:   Arith_Prog_Rel_Primes.thy
+  Author: Jose Manuel Rodriguez Caballero, University of Tartu
+*)
+section \<open>Problem ARITHMETIC PROGRESSIONS (Putnam exam problems 2002)\<close>
+theory Arith_Prog_Rel_Primes
+  imports
+    Complex_Main 
+    "HOL-Number_Theory.Number_Theory"
+    "HOL-ex.Sketch_and_Explore"
+begin
+
+text \<open>
+ Statement of the problem (from ~\cite{putnam}): For which integers $n>1$ does the set of positive 
+ integers less than and relatively prime to $n$ constitute an arithmetic progression?
+ 
+ The solution of the above problem is theorem arith_prog_rel_primes_solution.
+
+ First, we will require some auxiliary material before we get started with the actual
+ solution.
+\<close>
+
+subsection \<open>Auxiliary results\<close>
+
+lemma coprime_power2:
+  \<open>(n::nat) > 1
+\<Longrightarrow>
+\<forall> x :: nat. x < n \<longrightarrow> (coprime x n \<longleftrightarrow> odd x)
+\<Longrightarrow>
+\<exists> k. n = (2::nat)^k\<close>
+  sorry
+
+
+subsection \<open>Main result\<close>
+
+text \<open>
+  This is now a contradiction, since $\text{lcm}\{1\ldots n\} \in o(3^n)$ by the
+  Prime Number Theorem -- hence the main result.
+\<close>
+theorem arith_prog_rel_primes_solution:
+  fixes n :: nat
+  assumes \<open>n > 1\<close>
+  shows \<open>(prime n \<or> (\<exists> k. n = 2^k) \<or> n = 6) \<longleftrightarrow>  
+(\<exists> a b m. m \<noteq> 0 \<and> {x | x :: nat. x < n \<and> coprime x n} = {a+j*b| j::nat. j < m})\<close>
+proof-
+  have \<open> (prime n \<or> (\<exists> k. n = 2^k) \<or>  n = 6) \<longleftrightarrow>
+ (\<exists> b m. m \<noteq> 0 \<and> {x | x :: nat. x < n \<and> coprime x n} = {1+j*b| j::nat. j < m})\<close>
+  proof
+    show "\<exists>b m. m \<noteq> 0 \<and> {x |x. x < n \<and> coprime x n} = {1 + j * b |j. j < m}"
+      if "prime n \<or> (\<exists>k. n = 2 ^ k) \<or> n = 6"
+    proof-
+      have "\<exists>b m. m \<noteq> 0 \<and> {x |x. x < n \<and> coprime x n} = {1 + j * b |j. j < m}"
+        if "prime n"
+      proof-
+        have \<open>\<exists>m.   m \<noteq> 0 \<and> {x | x :: nat. x < n \<and> coprime x n} = {1+j| j::nat. j < m}\<close>
+        proof-
+          have \<open>{x | x :: nat. x < n \<and> coprime x n} =  {x | x :: nat. x \<noteq> 0 \<and> x < n}\<close> 
+          proof
+            show "{x |x. x < n \<and> coprime x n} \<subseteq> {x |x. x \<noteq> 0 \<and> x < n}"
+              by (smt Collect_mono not_le ord_0_nat ord_eq_0 order_refl prime_gt_1_nat that zero_neq_one)
+            show "{x |x. x \<noteq> 0 \<and> x < n} \<subseteq> {x |x. x < n \<and> coprime x n}"
+              using coprime_commute prime_nat_iff'' that by fastforce              
+          qed
+          obtain m where \<open>m+1 = n\<close>
+            using \<open>1 < n\<close> less_imp_add_positive linordered_field_class.sign_simps(2) by blast
+          have \<open>{1+j| j::nat. j < (m::nat)} =  {x | x :: nat. x \<noteq> 0 \<and> x < m+1}\<close> 
+            by (metis Suc_eq_plus1   \<open>m + 1 = n\<close> gr0_implies_Suc le_simps(3)   less_nat_zero_code   linorder_not_less nat.simps(3) nat_neq_iff  plus_1_eq_Suc )
+          hence  \<open>{x | x :: nat. x < n \<and> coprime x n} = {1+j| j::nat. j < (m::nat)}\<close>
+            using \<open>{x | x :: nat. x < n \<and> coprime x n} =  {x | x :: nat. x \<noteq> 0 \<and> x < n}\<close>  \<open>m+1 = n\<close> 
+            by auto
+          from \<open>n > 1\<close> have \<open>m \<noteq> 0\<close> 
+            using \<open>m + 1 = n\<close> by linarith
+          have \<open>{x | x :: nat. x < n \<and> coprime x n} = {1+j| j::nat. j < m}\<close> 
+            using Suc_eq_plus1 \<open>1 < n\<close> \<open>{x |x. x < n \<and> coprime x n} = {1 + j |j. j < m}\<close> by auto
+          hence \<open>(\<exists> m.  m \<noteq> 0 \<and> {x | x :: nat. x < n \<and> coprime x n} = {1+j| j::nat. j < m})\<close>
+            using \<open>m \<noteq> 0\<close> by blast
+          thus ?thesis by blast
+        qed
+        hence \<open>\<exists>m.  m \<noteq> 0 \<and> {x | x :: nat. x < n \<and> coprime x n} = {1+j*1| j::nat. j < m}\<close>
+          by auto
+        thus ?thesis
+          by blast 
+      qed
+      moreover have "\<exists>b m. m \<noteq> 0 \<and> {x |x. x < n \<and> coprime x n} = {1 + j * b |j. j < m}"
+        if "\<exists>k. n = 2 ^ k"
+      proof-
+        obtain k where \<open>n = 2 ^ k\<close>
+          using \<open>\<exists>k. n = 2 ^ k\<close> by auto
+        have \<open>k \<noteq> 0\<close> 
+          by (metis \<open>1 < n\<close> \<open>n = 2 ^ k\<close> nat_less_le power.simps(1))
+        obtain t where \<open>Suc t = k\<close> 
+          by (metis \<open>k \<noteq> 0\<close> fib.cases)
+        have \<open>n = 2^(Suc t)\<close> 
+          by (simp add: \<open>Suc t = k\<close> \<open>n = 2 ^ k\<close>)
+        have \<open>{x | x :: nat. x < n \<and> coprime x n} = {1+j*2| j::nat. j < 2^t}\<close>
+        proof
+          show "{x |x. x < n \<and> coprime x n} \<subseteq> {1 + j * 2 |j. j < 2^t}"
+          proof
+            fix x
+            assume \<open>x \<in> {x |x. x < n \<and> coprime x n}\<close>
+            hence \<open>x < n\<close>
+              by blast
+            have \<open>coprime x n\<close>
+              using \<open>x \<in> {x |x. x < n \<and> coprime x n}\<close>
+              by blast
+            hence \<open>coprime x (2^(Suc k))\<close>
+              by (simp add: \<open>k \<noteq> 0\<close> \<open>n = 2 ^ k\<close>)              
+            have \<open>odd x\<close>
+              using \<open>coprime x n\<close> \<open>k \<noteq> 0\<close> \<open>n = 2 ^ k\<close> by auto 
+            then obtain j where \<open>x = 1+j*2\<close>
+              by (metis add.commute add.left_commute left_add_twice mult_2_right oddE)
+            have \<open>x < 2^k\<close>
+              using \<open>n = 2 ^ k\<close> \<open>x < n\<close> \<open>x = 1+j*2\<close> by linarith
+            hence \<open>1+j*2 < 2^k\<close>
+              using \<open>x = 1+j*2\<close>
+              by blast
+            hence \<open>j < 2^t\<close>
+              using \<open>Suc t = k\<close> by auto              
+            thus \<open>x \<in> {1 + j * 2 |j. j < 2^t}\<close>
+              using \<open>x = 1+j*2\<close>
+              by blast
+          qed
+          show "{1 + j * 2 |j. j < 2 ^ t} \<subseteq> {x |x. x < n \<and> coprime x n}"
+          proof
+            fix x::nat
+            assume \<open>x \<in> {1 + j * 2 |j. j < 2 ^ t}\<close>
+            then obtain j where \<open>x = 1 + j * 2\<close> and \<open>j < 2 ^ t\<close>
+              by blast
+            have \<open>x < 2*(2^t)\<close>
+              using  \<open>x = 1 + j * 2\<close> and \<open>j < 2 ^ t\<close>
+              by linarith              
+            hence \<open>x < n\<close>
+              by (simp add: \<open>n = 2 ^ Suc t\<close>)
+            moreover have \<open>coprime x n\<close>
+              by (metis (no_types) \<open>\<And>thesis. (\<And>j. \<lbrakk>x = 1 + j * 2; j < 2 ^ t\<rbrakk> \<Longrightarrow> thesis) \<Longrightarrow> thesis\<close> \<open>n = 2 ^ k\<close> coprime_Suc_left_nat coprime_mult_right_iff coprime_power_right_iff plus_1_eq_Suc)              
+            ultimately show \<open>x \<in> {x |x. x < n \<and> coprime x n}\<close>
+              by blast
+          qed
+        qed
+        have \<open>(2::nat)^(t::nat) \<noteq> 0\<close> 
+          by simp
+        obtain m where \<open>m = (2::nat)^t\<close> by blast
+        have \<open>m \<noteq> 0\<close> 
+          using \<open>m = 2 ^ t\<close> by auto
+        have \<open>{x | x :: nat. x < n \<and> coprime x n} = {1+j*2| j::nat. j < m}\<close>
+          using \<open>m = 2 ^ t\<close> \<open>{x |x. x < n \<and> coprime x n} = {1 + j * 2 |j. j < 2 ^ t}\<close> by auto
+        from  \<open>m \<noteq> 0\<close>  \<open>{x | x :: nat. x < n \<and> coprime x n} = {1+j*2| j::nat. j < m}\<close>
+        show ?thesis by blast
+      qed
+      moreover have "\<exists>b m. m \<noteq> 0 \<and> {x |x. x < n \<and> coprime x n} = {1 + j * b |j. j < m}"
+        if "n = 6"
+      proof-
+        have  \<open>{x | x :: nat. x < 6 \<and> coprime x 6} = {1+j*4| j::nat. j < 2}\<close>
+        proof-
+          have \<open>{x | x :: nat. x < 6 \<and> coprime x 6} = {1, 5}\<close>
+          proof
+            show "{u. \<exists>x. (u::nat) = x \<and> x < 6 \<and> coprime x 6} \<subseteq> {1, 5}"
+            proof
+              fix u::nat
+              assume \<open>u \<in> {u. \<exists>x. (u::nat) = x \<and> x < 6 \<and> coprime x 6}\<close>
+              hence \<open>coprime u 6\<close>
+                by blast
+              have \<open>u < 6\<close>
+                using \<open>u \<in> {u. \<exists>x. (u::nat) = x \<and> x < 6 \<and> coprime x 6}\<close>
+                by blast
+              moreover have \<open>u \<noteq> 0\<close>
+                using \<open>coprime u 6\<close> ord_eq_0 by fastforce
+              moreover have \<open>u \<noteq> 2\<close>
+                using \<open>coprime u 6\<close>
+                by auto
+              moreover have \<open>u \<noteq> 3\<close>
+              proof-
+                have \<open>gcd (3::nat) 6 = 3\<close>
+                  by auto
+                thus ?thesis 
+                  by (metis (no_types) \<open>coprime u 6\<close> \<open>gcd 3 6 = 3\<close> coprime_iff_gcd_eq_1 
+                      numeral_eq_one_iff semiring_norm(86))
+              qed
+              moreover have \<open>u \<noteq> 4\<close>
+              proof-
+                have \<open>gcd (4::nat) 6 = 2\<close>
+                  by (metis (no_types, lifting) add_numeral_left gcd_add1 gcd_add2 gcd_nat.idem
+                      numeral_Bit0 numeral_One one_plus_numeral semiring_norm(4) semiring_norm(5))
+                thus ?thesis
+                  using \<open>coprime u 6\<close> coprime_iff_gcd_eq_1 by auto 
+              qed
+              ultimately have \<open>u = 1 \<or> u = 5\<close>
+                by auto
+              thus \<open>u \<in> {1, 5}\<close>
+                by blast
+            qed
+            show "{1::nat, 5} \<subseteq> {x |x. x < 6 \<and> coprime x 6}"
+            proof-
+              have \<open>(1::nat) \<in> {x |x. x < 6 \<and> coprime x 6}\<close>
+                by simp                
+              moreover have \<open>(5::nat) \<in> {x |x. x < 6 \<and> coprime x 6}\<close>
+                by (metis Suc_numeral coprime_Suc_right_nat less_add_one mem_Collect_eq
+                    numeral_plus_one semiring_norm(5) semiring_norm(8))                
+              ultimately show ?thesis by blast
+            qed
+          qed
+          moreover have \<open>{1+j*4| j::nat. j < 2} = {1, 5}\<close>
+            by auto
+          ultimately show ?thesis by auto
+        qed
+        moreover have \<open>(2::nat) \<noteq> (0::nat)\<close>
+          by simp          
+        ultimately have  \<open>\<exists> m.  m \<noteq> 0 \<and> {x | x :: nat. x < 6 \<and> coprime x 6} = {1+j*4| j::nat. j < m}\<close>
+          by blast
+        thus ?thesis
+          using that by auto 
+      qed
+      ultimately show ?thesis
+        using that by blast 
+    qed
+    show "prime n \<or> (\<exists>k. n = 2 ^ k) \<or> n = 6"
+      if "\<exists>b m. m \<noteq> 0 \<and> {x |x. x < n \<and> coprime x n} = {1 + j * b |j. j < m}"
+    proof-
+      obtain b m where \<open>m \<noteq> 0\<close> and \<open>{x |x. x < n \<and> coprime x n} = {1 + j * b |j. j < m}\<close>
+        using \<open>\<exists>b m. m \<noteq> 0 \<and> {x |x. x < n \<and> coprime x n} = {1 + j * b |j. j < m}\<close> by auto
+      show ?thesis
+      proof(cases \<open>n = 2\<close>)
+        case True
+        thus ?thesis
+          by auto 
+      next
+        case False
+        have \<open>b \<le> 4\<close>
+          sorry
+        moreover have \<open>b \<noteq> 3\<close>
+        proof (rule classical)
+          assume \<open>\<not> (b \<noteq> 3)\<close>
+          hence \<open>b = 3\<close> by blast
+          obtain m where  \<open>m \<noteq> 0\<close> and 
+            \<open>{x | x :: nat. x < n \<and> coprime x n} = {1+j*(b::nat)| j::nat. j < m}\<close>
+            using \<open>m \<noteq> 0\<close> \<open>{x |x. x < n \<and> coprime x n} = {1 + j * b |j. j < m}\<close> by blast            
+          have \<open>b \<noteq> 0\<close> 
+            by (simp add: \<open>b = 3\<close>)
+          from \<open>n > 1\<close> \<open>m \<noteq> 0\<close>  \<open>{x | x :: nat. x < n \<and> coprime x n} = {1+j*(b::nat)| j::nat. j < m}\<close>
+            \<open>b \<noteq> 0\<close> 
+          have \<open>n = 2 + (m-1)*b\<close> 
+          proof-
+            have \<open>n-1 \<in> {x | x :: nat. x < n \<and> coprime x n}\<close> 
+              using \<open>1 < n\<close> coprime_diff_one_left_nat by auto
+            have \<open>n-1 \<in> {1+j*b| j::nat. j < m}\<close> 
+              using \<open>n - 1 \<in> {x |x. x < n \<and> coprime x n}\<close> \<open>{x |x. x < n \<and> coprime x n} = {1 + j * b |j. j < m}\<close> by blast
+            then obtain i::nat where \<open>n-1 = 1+i*b\<close> and \<open>i < m\<close> 
+              by blast
+            have \<open>i \<le> m-1\<close> 
+              using \<open>i < m\<close> by linarith
+            have \<open>1 + (m-1)*b \<in> {1+j*b| j::nat. j < m}\<close> 
+              using \<open>m \<noteq> 0\<close> by auto
+            hence \<open>1 + (m-1)*b \<in> {x | x :: nat. x < n \<and> coprime x n}\<close> 
+              using \<open>{x |x. x < n \<and> coprime x n} = {1 + j * b |j. j < m}\<close> by blast
+            hence \<open>1 + (m-1)*b < n\<close> 
+              by blast
+            hence \<open>1 + (m-1)*b \<le> n-1\<close> 
+              by linarith
+            hence \<open>1 + (m-1)*b \<le> 1+i*b\<close> 
+              using \<open>n - 1 = 1 + i * b\<close> by linarith
+            hence \<open>(m-1)*b \<le> i*b\<close> 
+              by linarith
+            hence \<open>m-1 \<le> i\<close> using \<open>b \<noteq> 0\<close> 
+              by auto
+            hence \<open>m-1 = i\<close> 
+              using \<open>i \<le> m - 1\<close> le_antisym by blast
+            thus ?thesis 
+              using \<open>m \<noteq> 0\<close> \<open>n - 1 = 1 + i * b\<close> by auto
+          qed
+          have \<open>n > 2\<close> 
+            using \<open>1 < n\<close> \<open>n \<noteq> 2\<close> by linarith
+          hence \<open> m \<ge> 2 \<close> using  \<open>n = 2 + (m-1)*b\<close> \<open>b = 3\<close> 
+            by simp
+          have \<open>4 \<in> {1+j*(b::nat)| j::nat. j < m}\<close> 
+            using \<open>2 \<le> m\<close> \<open>b = 3\<close> by force
+          hence \<open>(4::nat) \<in>  {x | x :: nat. x < n \<and> coprime x n}\<close> 
+            using \<open>{x |x. x < n \<and> coprime x n} = {1 + j * b |j. j < m}\<close> by auto
+          hence \<open>coprime (4::nat) n\<close> 
+            by blast
+          have \<open>(2::nat) dvd 4\<close> by auto
+          hence \<open>coprime (2::nat) n\<close> using  \<open>coprime (4::nat) n\<close> 
+            using coprime_divisors dvd_refl by blast
+          have \<open>4 < n\<close> 
+            using \<open>4 \<in> {x |x. x < n \<and> coprime x n}\<close> by blast
+          have \<open>2 < (4::nat)\<close> by auto
+          have  \<open>2 < n\<close> 
+            by (simp add: \<open>2 < n\<close>)
+          hence \<open>2 \<in> {x | x :: nat. x < n \<and> coprime x n}\<close> using  \<open>coprime (2::nat) n\<close> by blast
+          hence  \<open>2 \<in> {1+j*(b::nat)| j::nat. j < m}\<close> 
+            using \<open>{x |x. x < n \<and> coprime x n} = {1 + j * b |j. j < m}\<close> by blast
+          then obtain j::nat where \<open>2 = 1+j*3\<close> using \<open>b = 3\<close> by blast
+          from  \<open>2 = 1+j*3\<close>
+          have  \<open>1 = j*3\<close> by auto
+          hence \<open>3 dvd 1\<close> by auto
+          thus ?thesis
+            using nat_dvd_1_iff_1 numeral_eq_one_iff by blast             
+        qed
+        ultimately have \<open>b = 0 \<or> b = 1 \<or> b = 2 \<or> b = 4\<close>
+          by auto
+        moreover have \<open>b = 0 \<Longrightarrow> \<exists>k. n = 2^k\<close>
+        proof-
+          assume \<open>b = 0\<close>
+          have \<open>{1 + j * b |j. j < m} = {1}\<close>
+            using \<open>b = 0\<close> \<open>m \<noteq> 0\<close> by auto            
+          hence \<open>{x |x. x < n \<and> coprime x n} = {1}\<close>
+            using \<open>{x |x. x < n \<and> coprime x n} = {1 + j * b |j. j < m}\<close>
+            by blast
+          hence \<open>n = 2\<close>
+          proof-
+            have \<open>n-1 \<in>  {x | x :: nat. x < n \<and> coprime x n}\<close> 
+              using \<open>1 < n\<close> coprime_diff_one_left_nat by auto
+            have \<open>n-1 \<in> {1}\<close> 
+              using \<open>n - 1 \<in> {x |x. x < n \<and> coprime x n}\<close> \<open>{x |x. x < n \<and> coprime x n} = {1}\<close> by blast
+            hence \<open>n-1 = 1\<close> 
+              by blast
+            hence \<open>n = 2\<close> by simp
+            thus ?thesis by blast
+          qed
+          hence \<open>n = 2^1\<close>
+            by auto
+          thus ?thesis
+            by blast 
+        qed
+        moreover have \<open>b = 1 \<Longrightarrow> prime n\<close>
+        proof-
+          assume \<open>b = 1\<close>
+          have \<open>x < n \<Longrightarrow> x \<noteq> 0 \<Longrightarrow> coprime x n\<close>
+            for x
+          proof-
+            assume \<open>x < n\<close> and \<open>x \<noteq> 0\<close>
+            have \<open>{1+j| j::nat. j < m} = {x | x :: nat. x < m+1 \<and> x \<noteq> 0}\<close> 
+              by (metis (full_types) Suc_eq_plus1  add_mono1 less_Suc_eq_0_disj  nat.simps(3) plus_1_eq_Suc )
+            hence \<open>{x | x :: nat. x < n \<and> coprime x n} = {x | x :: nat. x < m+1 \<and> x \<noteq> 0}\<close>
+              using \<open>b = 1\<close> \<open>{x |x. x < n \<and> coprime x n} = {1 + j * b |j. j < m}\<close> by auto
+            have \<open>coprime (n-1) n\<close> 
+              using \<open>1 < n\<close> coprime_diff_one_left_nat by auto
+            have \<open>n-1 < n\<close> 
+              using \<open>1 < n\<close> by auto
+            have \<open>n-1 \<in> {x |x. x < n \<and> coprime x n}\<close> 
+              using \<open>coprime (n - 1) n\<close> \<open>n - 1 < n\<close> by blast
+            have \<open>n-1 \<le> m\<close> 
+              by (metis (no_types, lifting) CollectD Suc_eq_plus1 Suc_less_eq2 \<open>n - 1 \<in> {x |x. x < n \<and> coprime x n}\<close> \<open>{x |x. x < n \<and> coprime x n} = {x |x. x < m + 1 \<and> x \<noteq> 0}\<close>   leD  le_less_linear not_less_eq_eq )
+            have \<open>m \<in>  {x | x :: nat. x < m+1 \<and> x \<noteq> 0}\<close> 
+              using \<open>m \<noteq> 0\<close> by auto
+            have \<open>m \<in> {x |x. x < n \<and> coprime x n} \<close> 
+              using \<open>m \<in> {x |x. x < m + 1 \<and> x \<noteq> 0}\<close> \<open>{x |x. x < n \<and> coprime x n} = {x |x. x < m + 1 \<and> x \<noteq> 0}\<close> by blast
+            have \<open>m < n\<close> 
+              using \<open>m \<in> {x |x. x < n \<and> coprime x n}\<close> by blast
+            have \<open>m+1 = n\<close> 
+              using \<open>m < n\<close> \<open>n - 1 \<le> m\<close> by linarith
+            have \<open>x \<in>  {x | x :: nat. x < m+1 \<and> x \<noteq> 0}\<close> 
+              using \<open>m + 1 = n\<close> \<open>x < n\<close> \<open>x \<noteq> 0\<close> by blast
+            hence \<open>x \<in> {x |x. x < n \<and> coprime x n}\<close> 
+              using \<open>{x |x. x < n \<and> coprime x n} = {x |x. x < m + 1 \<and> x \<noteq> 0}\<close> by blast
+            thus ?thesis 
+              by blast
+          qed
+          thus ?thesis
+            using assms coprime_commute nat_neq_iff prime_nat_iff'' by auto 
+        qed
+        moreover have \<open>b = 2 \<Longrightarrow> \<exists> k. n = 2^k\<close>
+        proof-
+          assume \<open>b = 2\<close>
+          have \<open>{x | x :: nat. x < n \<and> coprime x n} = {1+j*2| j::nat. j < m}\<close>
+            using \<open>b = 2\<close> \<open>{x |x. x < n \<and> coprime x n} = {1 + j * b |j. j < m}\<close> by auto
+          have \<open>x < n \<Longrightarrow> coprime x n \<longleftrightarrow> odd x\<close>
+            for x::nat
+          proof-
+            assume \<open>x < n\<close>
+            have \<open>coprime x n \<Longrightarrow> odd x\<close>
+            proof-
+              assume \<open>coprime x n\<close>
+              have \<open>x \<in> {x | x :: nat. x < n \<and> coprime x n}\<close> 
+                by (simp add: \<open>coprime x n\<close> \<open>x < n\<close>)
+              hence \<open>x \<in> {1+j*2| j::nat. j < m}\<close> 
+                using \<open>{x |x. x < n \<and> coprime x n} = {1 + j * 2 |j. j < m}\<close> by blast
+              then obtain j where \<open>x = 1+j*2\<close> 
+                by blast
+              thus ?thesis
+                by simp
+            qed
+            moreover have \<open>odd x \<Longrightarrow> coprime x n\<close>
+            proof-
+              assume \<open>odd x\<close>
+              obtain j::nat where \<open>x = 1+j*2\<close> 
+                by (metis \<open>odd x\<close> add.commute mult_2_right odd_two_times_div_two_succ one_add_one semiring_normalization_rules(16)) 
+              have \<open>j < (n-1)/2\<close> 
+                using \<open>x < n\<close> \<open>x = 1 + j * 2\<close> by linarith
+              from \<open>n > 1\<close> \<open>m \<noteq> 0\<close>  \<open>{x | x :: nat. x < n \<and> coprime x n} = {1+j*2| j::nat. j < m}\<close>
+              have \<open>n = 2*m\<close>
+              proof-
+                have  \<open>(2::nat) \<noteq> 0\<close> by auto
+                from  \<open>n > 1\<close>  \<open>m \<noteq> 0\<close> \<open>{x | x :: nat. x < n \<and> coprime x n} = {1+j*(2::nat)| j::nat. j < m}\<close> \<open>(2::nat) \<noteq> 0\<close>
+                have \<open>n = 2+(m-1)*2\<close> 
+                proof-
+                  have \<open>n-1 \<in> {x | x :: nat. x < n \<and> coprime x n}\<close> 
+                    using \<open>1 < n\<close> coprime_diff_one_left_nat by auto
+                  have \<open>n-1 \<in> {1+j*b| j::nat. j < m}\<close> 
+                    using \<open>n - 1 \<in> {x |x. x < n \<and> coprime x n}\<close> \<open>{x |x. x < n \<and> coprime x n} = {1 + j * b |j. j < m}\<close> by blast
+                  then obtain i::nat where \<open>n-1 = 1+i*b\<close> and \<open>i < m\<close> 
+                    by blast
+                  have \<open>i \<le> m-1\<close> 
+                    using \<open>i < m\<close> by linarith
+                  have \<open>1 + (m-1)*b \<in> {1+j*b| j::nat. j < m}\<close> 
+                    using \<open>m \<noteq> 0\<close> by auto
+                  hence \<open>1 + (m-1)*b \<in> {x | x :: nat. x < n \<and> coprime x n}\<close> 
+                    using \<open>{x |x. x < n \<and> coprime x n} = {1 + j * b |j. j < m}\<close> by blast
+                  hence \<open>1 + (m-1)*b < n\<close> 
+                    by blast
+                  hence \<open>1 + (m-1)*b \<le> n-1\<close> 
+                    by linarith
+                  hence \<open>1 + (m-1)*b \<le> 1+i*b\<close> 
+                    using \<open>n - 1 = 1 + i * b\<close> by linarith
+                  hence \<open>(m-1)*b \<le> i*b\<close> 
+                    by linarith
+                  hence \<open>m-1 \<le> i\<close> 
+                  proof-
+                    have \<open>b \<noteq> 0\<close>
+                      using \<open>b = 2\<close>
+                      by simp
+                    thus ?thesis
+                      using \<open>(m - 1) * b \<le> i * b\<close> mult_le_cancel2 by blast 
+                  qed
+                  hence \<open>m-1 = i\<close> 
+                    using \<open>i \<le> m - 1\<close> le_antisym by blast
+                  thus ?thesis 
+                    using \<open>m \<noteq> 0\<close> \<open>n - 1 = 1 + i * b\<close>
+                    by (simp add: \<open>b = 2\<close>)
+                qed
+                thus  ?thesis 
+                  by (simp add: \<open>m \<noteq> 0\<close> \<open>n = 2 + (m - 1) * 2\<close> mult.commute mult_eq_if)
+              qed
+              hence \<open>j < m\<close> 
+                using \<open>x < n\<close> \<open>x = 1 + j * 2\<close> by linarith
+              hence \<open>x \<in> {1+j*2| j::nat. j < m}\<close> 
+                using \<open>x = 1 + j * 2\<close> by blast
+              hence \<open>x \<in> {x | x :: nat. x < n \<and> coprime x n}\<close> 
+                using \<open>{x |x. x < n \<and> coprime x n} = {1 + j * 2 |j. j < m}\<close> by blast
+              thus ?thesis 
+                by blast
+            qed
+            ultimately show ?thesis by blast
+          qed
+          thus ?thesis 
+            using coprime_power2 assms by auto
+        qed
+        moreover have \<open>b = 4 \<Longrightarrow> n = 6\<close>
+        proof-
+          assume \<open>b = 4\<close>
+          have \<open>n = 2 \<or> n = 6\<close>
+            sorry
+          thus ?thesis
+            sorry
+        qed
+        ultimately show ?thesis by blast
+      qed
+    qed
+  qed
+  moreover have \<open>(\<exists> b m. m \<noteq> 0 \<and> {x | x :: nat. x < n \<and> coprime x n} = {1+j*b| j::nat. j < m})
+  \<longleftrightarrow> (\<exists> a b m. m \<noteq> 0 \<and> {x | x :: nat. x < n \<and> coprime x n} = {a+j*b| j::nat. j < m})\<close>
+  proof
+    show "\<exists>a b m. m \<noteq> 0 \<and> {x |x. x < n \<and> coprime x n} = {a + j * b |j. j < m}"
+      if "\<exists>b m. m \<noteq> 0 \<and> {x |x. x < n \<and> coprime x n} = {1 + j * b |j. j < m}"
+      using that
+      by blast 
+    show "\<exists>b m. m \<noteq> 0 \<and> {x |x. x < n \<and> coprime x n} = {1 + j * b |j. j < m}"
+      if "\<exists>a b m. m \<noteq> 0 \<and> {x |x. x < n \<and> coprime x n} = {a + j * b |j. j < m}"
+    proof-
+      obtain a b m::nat where \<open>m \<noteq> 0\<close>
+        and \<open>{x | x :: nat. x < n \<and> coprime x n} = {a+j*b| j::nat. j < m}\<close>
+        using \<open>\<exists>a b m. m \<noteq> 0 \<and> {x |x. x < n \<and> coprime x n} = {a + j * b |j. j < m}\<close> by auto        
+      have \<open>a = 1\<close> 
+      proof-
+        have \<open>{x | x :: nat. x < n \<and> coprime x n} = {(a::nat)+j*(b::nat)| j::nat. j < m} \<Longrightarrow> a = 1\<close>
+        proof-
+          have \<open>Min {x | x :: nat. x < n \<and> coprime x n} = Min {a+j*b| j::nat. j < m}\<close>
+            using \<open>{x |x. x < n \<and> coprime x n} = {a + j * b |j. j < m}\<close> by auto            
+          have  \<open>Min {x | x :: nat. x < n \<and> coprime x n} = 1\<close>
+          proof-
+            have \<open>finite {x | x :: nat. x < n \<and> coprime x n}\<close>
+              by auto
+            have \<open>{x | x :: nat. x < n \<and> coprime x n} \<noteq> {}\<close> 
+              using \<open>1 < n\<close> by auto
+            have \<open>1 \<in> {x | x :: nat. x < n \<and> coprime x n}\<close> 
+              using \<open>1 < n\<close> by auto
+            have \<open>\<forall> x. coprime x n \<longrightarrow> x \<ge> 1\<close> 
+              using \<open>1 < n\<close> le_less_linear by fastforce
+            hence \<open>\<forall> x.  x < n \<and> coprime x n \<longrightarrow> x \<ge> 1\<close> 
+              by blast
+            hence \<open>\<forall> x \<in> {x | x :: nat. x < n \<and> coprime x n}. x \<ge> 1\<close> 
+              by blast
+            hence \<open>Min {x | x :: nat. x < n \<and> coprime x n} \<ge> 1\<close> 
+              using  \<open>finite {x | x :: nat. x < n \<and> coprime x n}\<close> 
+                \<open>{x |x. x < n \<and> coprime x n} \<noteq> {}\<close> by auto
+            thus ?thesis 
+              using Min_le \<open>1 \<in> {x |x. x < n \<and> coprime x n}\<close> \<open>finite {x |x. x < n \<and> coprime x n}\<close> antisym by blast
+          qed
+          have \<open>Min  {a+j*b| j::nat. j < m} = a\<close>
+          proof -
+            have f1: "\<exists>n. a = a + n * b \<and> n < m"
+              using \<open>m \<noteq> 0\<close> by auto
+            have f2: "\<exists>n. 1 = a + n * b \<and> n < m"
+              using \<open>{x |x. x < n \<and> coprime x n} = {a + j * b |j. j < m}\<close> assms coprime_1_left by blast
+            have f3: "\<exists>na. a = na \<and> na < n \<and> coprime na n"
+              using f1 \<open>{x |x. x < n \<and> coprime x n} = {a + j * b |j. j < m}\<close> by blast
+            have "n \<noteq> 1"
+              by (metis (lifting) assms less_irrefl_nat)
+            then have "\<not> coprime 0 n"
+              by simp
+            then show ?thesis
+              using f3 f2 by (metis \<open>Min {x |x. x < n \<and> coprime x n} = 1\<close> \<open>{x |x. x < n \<and> coprime x n} = {a + j * b |j. j < m}\<close> less_one linorder_neqE_nat not_add_less1)
+          qed
+          hence \<open>Min  {a+j*b| j::nat. j < m} = a\<close> by blast
+          thus ?thesis 
+            using \<open>Min {x | x :: nat. x < n \<and> coprime x n} = 1\<close> \<open>Min {x | x :: nat. x < n \<and> coprime x n} = Min {a+j*b| j::nat. j < m}\<close>
+            by linarith
+        qed
+        thus ?thesis
+          using \<open>{x |x. x < n \<and> coprime x n} = {a + j * b |j. j < m}\<close> by blast 
+      qed
+      thus ?thesis using  \<open>m \<noteq> 0\<close> \<open>{x | x :: nat. x < n \<and> coprime x n} = {a+j*b| j::nat. j < m}\<close> 
+        by auto
+    qed
+  qed 
+  ultimately show ?thesis
+    by simp 
+qed
+
+end
