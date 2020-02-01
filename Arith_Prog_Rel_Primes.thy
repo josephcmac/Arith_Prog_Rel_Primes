@@ -13,7 +13,7 @@ text \<open>
  Statement of the problem (from ~\cite{putnam}): For which integers $n>1$ does the set of positive 
  integers less than and relatively prime to $n$ constitute an arithmetic progression?
  
- The solution of the above problem is theorem arith_prog_rel_primes_solution.
+ The solution of the above problem is theorem @{text arith_prog_rel_primes_solution}.
 
  First, we will require some auxiliary material before we get started with the actual
  solution.
